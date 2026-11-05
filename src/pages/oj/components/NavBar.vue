@@ -8,11 +8,11 @@
       </Menu-item>
       <Menu-item name="/classroom">
         <Icon type="ios-book"></Icon>
-        C 課堂
+        C Classroom
       </Menu-item>
       <Menu-item v-if="classroomRoute && isAuthenticated" name="classroom-leaderboard">
         <Icon type="stats-bars"></Icon>
-        排行榜
+        Leaderboard
       </Menu-item>
       <Menu-item v-if="!classroomRoute" name="/contest">
         <Icon type="trophy"></Icon>
@@ -35,7 +35,7 @@
           <Button type="ghost"
                   ref="loginBtn"
                   shape="circle"
-                  @click="handleRoute('/classroom')">{{ classroomRoute ? '登入' : $t('m.Login') }}
+                  @click="handleRoute('/classroom')">{{ classroomRoute ? 'Sign in' : $t('m.Login') }}
           </Button>
         </div>
       </template>

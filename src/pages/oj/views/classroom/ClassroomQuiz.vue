@@ -2,14 +2,14 @@
   <div class="fcu-quiz-page" :class="'theme-' + theme">
     <template v-if="quiz">
       <header class="workspace-topbar">
-        <button class="icon-button back-button" type="button" aria-label="返回課堂"
+        <button class="icon-button back-button" type="button" aria-label="Back to classroom"
                 @click="$router.push({name: 'fcu-classroom', params: {classSlug}})">
           <Icon type="chevron-left"></Icon>
         </button>
         <span class="quiz-name">{{ quiz.title }}</span>
         <span class="topbar-divider"></span>
         <label class="question-picker">
-          <span class="sr-only">選擇題目</span>
+          <span class="sr-only">Choose problem</span>
           <select :value="selected ? selected.id : ''" @change="selectById($event.target.value)">
             <option v-for="item in questions" :key="item.id" :value="item.id">{{ item.title }}</option>
           </select>
@@ -18,101 +18,101 @@
         <span class="topbar-spacer"></span>
         <span class="mode-badge">{{ quiz.mode === 'exam' ? 'Exam' : 'Practice' }}</span>
         <span v-if="quiz.mode === 'exam'" class="timer"><Icon type="clock"></Icon> {{ remainingText }}</span>
-        <button class="icon-button theme-button" type="button" :aria-label="theme === 'dark' ? '切換淺色模式' : '切換深色模式'"
-                :title="theme === 'dark' ? '淺色模式' : '深色模式'" @click="toggleTheme">
+        <button class="icon-button theme-button" type="button" :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+                :title="theme === 'dark' ? 'Light mode' : 'Dark mode'" @click="toggleTheme">
           <Icon :type="theme === 'dark' ? 'ios-sunny-outline' : 'ios-moon-outline'"></Icon>
         </button>
       </header>
 
       <div class="workspace-grid" v-if="selected">
-        <section class="workspace-panel description-panel" aria-label="題目">
-          <nav class="pane-tabs" aria-label="題目分頁">
-            <button type="button" :class="{active: descriptionTab === 'description'}" @click="descriptionTab = 'description'">題目說明</button>
-            <button type="button" :class="{active: descriptionTab === 'submissions'}" @click="descriptionTab = 'submissions'">我的提交</button>
-            <button v-if="quiz.mode === 'practice'" type="button" :class="{active: descriptionTab === 'status'}" @click="showSocial('status')">狀態</button>
-            <button v-if="quiz.mode === 'practice'" type="button" :class="{active: descriptionTab === 'leaderboard'}" @click="showSocial('leaderboard')">排行榜</button>
+        <section class="workspace-panel description-panel" aria-label="Problem">
+          <nav class="pane-tabs" aria-label="Problem tabs">
+            <button type="button" :class="{active: descriptionTab === 'description'}" @click="descriptionTab = 'description'">Description</button>
+            <button type="button" :class="{active: descriptionTab === 'submissions'}" @click="descriptionTab = 'submissions'">My Submissions</button>
+            <button v-if="quiz.mode === 'practice'" type="button" :class="{active: descriptionTab === 'status'}" @click="showSocial('status')">Status</button>
+            <button v-if="quiz.mode === 'practice'" type="button" :class="{active: descriptionTab === 'leaderboard'}" @click="showSocial('leaderboard')">Leaderboard</button>
           </nav>
 
           <div class="pane-scroll description-content" v-if="descriptionTab === 'description'">
             <h1>{{ selected.title }}</h1>
             <div class="problem-meta">
-              <span class="meta-pill">{{ selected.kind === 'c_lab' ? 'C17' : '選擇題' }}</span>
-              <span class="meta-pill">{{ selected.points }} 分</span>
-              <span class="meta-pill subdued">最佳 {{ scoreFor(selected) }} 分</span>
+              <span class="meta-pill">{{ selected.kind === 'c_lab' ? 'C17' : 'Multiple Choice' }}</span>
+              <span class="meta-pill">{{ selected.points }} pts</span>
+              <span class="meta-pill subdued">Best {{ scoreFor(selected) }} pts</span>
             </div>
             <p v-if="error" class="inline-error">{{ error }}</p>
-            <p v-if="!quiz.open || expired" class="inline-note">測驗已結束。你仍可檢視自己的成績與提交程式。</p>
+            <p v-if="!quiz.open || expired" class="inline-note">This exam has ended. You can still review your scores and submissions.</p>
             <div class="question-prompt">{{ selected.prompt }}</div>
             <template v-if="selected.kind === 'c_lab' && problemDetails">
               <div v-if="problemDetails.description" class="prose-section">
-                <h2>說明</h2><p>{{ plainText(problemDetails.description) }}</p>
+                <h2>Description</h2><p>{{ plainText(problemDetails.description) }}</p>
               </div>
               <div v-if="problemDetails.input_description" class="prose-section">
-                <h2>輸入</h2><p>{{ plainText(problemDetails.input_description) }}</p>
+                <h2>Input</h2><p>{{ plainText(problemDetails.input_description) }}</p>
               </div>
               <div v-if="problemDetails.output_description" class="prose-section">
-                <h2>輸出</h2><p>{{ plainText(problemDetails.output_description) }}</p>
+                <h2>Output</h2><p>{{ plainText(problemDetails.output_description) }}</p>
               </div>
               <div v-for="(sample, index) in problemDetails.samples || []" :key="index" class="example">
-                <h2>範例 {{ index + 1 }}</h2>
+                <h2>Case {{ index + 1 }}</h2>
                 <div class="example-line"><strong>Input:</strong><pre>{{ sample.input }}</pre></div>
                 <div class="example-line"><strong>Output:</strong><pre>{{ sample.output }}</pre></div>
               </div>
             </template>
-            <p v-if="selected.kind === 'c_lab'" class="problem-footnote">請撰寫完整的 C17 程式，從標準輸入讀取資料，將結果輸出至標準輸出。</p>
+            <p v-if="selected.kind === 'c_lab'" class="problem-footnote">Write a complete C17 program. Read from standard input and write to standard output.</p>
           </div>
 
           <div class="pane-scroll records-content" v-else-if="descriptionTab === 'submissions'">
-            <div class="records-heading"><h2>我的提交</h2><button type="button" @click="loadHistory">重新整理</button></div>
-            <p v-if="historyLoading" class="empty-state">讀取提交紀錄中…</p>
-            <p v-else-if="!selectedAttempts.length" class="empty-state">尚無提交紀錄。</p>
+            <div class="records-heading"><h2>My Submissions</h2><button type="button" @click="loadHistory">Refresh</button></div>
+            <p v-if="historyLoading" class="empty-state">Loading submissions…</p>
+            <p v-else-if="!selectedAttempts.length" class="empty-state">No submissions yet.</p>
             <article v-for="item in selectedAttempts" :key="item.id || item.submissionId || item.at" class="submission-row">
               <div><strong :class="verdictClass(item)">{{ verdictText(item) }}</strong><small>{{ when(item) }}</small></div>
-              <span>{{ item.earned || 0 }} / {{ item.max || selected.points }} 分</span>
-              <button v-if="item.code" type="button" @click="restoreCode(item)">檢視程式</button>
+              <span>{{ item.earned || 0 }} / {{ item.max || selected.points }} pts</span>
+              <button v-if="item.code" type="button" @click="restoreCode(item)">View code</button>
             </article>
           </div>
 
           <div class="pane-scroll records-content" v-else-if="descriptionTab === 'status'">
-            <div class="records-heading"><h2>全班狀態</h2><button type="button" @click="loadSocial('status')">重新整理</button></div>
-            <p v-if="socialLoading" class="empty-state">讀取中…</p>
+            <div class="records-heading"><h2>Class Activity</h2><button type="button" @click="loadSocial('status')">Refresh</button></div>
+            <p v-if="socialLoading" class="empty-state">Loading…</p>
             <p v-else-if="socialError" class="inline-error">{{ socialError }}</p>
-            <p v-else-if="!statusEntries.length" class="empty-state">目前沒有提交。</p>
+            <p v-else-if="!statusEntries.length" class="empty-state">No submissions yet.</p>
             <article v-for="(item, index) in statusEntries" :key="index" class="submission-row">
               <div><strong>{{ item.name || item.login }}</strong><small>{{ item.questionTitle }} · {{ when({at: item.at}) }}</small></div>
-              <span>{{ item.earned }} / {{ item.maxScore }} 分</span>
+              <span>{{ item.earned }} / {{ item.maxScore }} pts</span>
               <span :class="verdictClass(item)">{{ verdictText(item) }}</span>
             </article>
-            <p class="privacy-note">此處只顯示練習成績與狀態，不公開同學的程式。</p>
+            <p class="privacy-note">Only practice scores and status are visible. Other students’ code is private.</p>
           </div>
 
           <div class="pane-scroll records-content" v-else>
-            <div class="records-heading"><h2>練習排行榜</h2><button type="button" @click="loadSocial('leaderboard')">重新整理</button></div>
-            <p v-if="socialLoading" class="empty-state">讀取中…</p>
+            <div class="records-heading"><h2>Practice Leaderboard</h2><button type="button" @click="loadSocial('leaderboard')">Refresh</button></div>
+            <p v-if="socialLoading" class="empty-state">Loading…</p>
             <p v-else-if="socialError" class="inline-error">{{ socialError }}</p>
-            <p v-else-if="!leaderboardEntries.length" class="empty-state">目前沒有成績。</p>
+            <p v-else-if="!leaderboardEntries.length" class="empty-state">No scores yet.</p>
             <article v-for="item in leaderboardEntries" :key="item.login" class="leader-row">
               <strong class="rank">{{ item.rank }}</strong>
               <span class="leader-name">{{ item.name || item.login }}<small>{{ item.login }}</small></span>
               <strong>{{ item.score }} / {{ item.maxScore }}</strong>
             </article>
-            <p class="privacy-note">限練習模式；考試成績與排行榜只有教師可看。</p>
+            <p class="privacy-note">Practice mode only. Exam scores and rankings are teacher-only.</p>
           </div>
         </section>
 
-        <section class="workspace-panel work-panel" :style="{'--console-height': consoleHeight + 'px'}" aria-label="作答工作區">
+        <section class="workspace-panel work-panel" :style="{'--console-height': consoleHeight + 'px'}" aria-label="Coding workspace">
           <div class="code-panel" v-if="selected.kind === 'c_lab'">
             <div class="code-header">
-              <span><Icon type="code-working"></Icon> 程式碼</span>
+              <span><Icon type="code-working"></Icon> Code</span>
               <span class="language-label">C17</span>
               <span class="code-header-spacer"></span>
-              <span class="completion-note">自動補全 · Ctrl + Space</span>
+              <span class="completion-note">Autocomplete · Tab to accept · Ctrl + Space</span>
             </div>
             <div class="editor-slot"><CEditor ref="cEditor" :value.sync="code" :diagnostics="diagnostics" :disabled="submitting || expired || !quiz.open" :theme="theme"/></div>
-            <div class="editor-status"><span>{{ saveStatus || '自動儲存' }}</span><span>{{ syntaxStatus }}</span></div>
+            <div class="editor-status"><span>{{ saveStatus || 'Autosave' }}</span><span>{{ syntaxStatus }}</span></div>
           </div>
           <div class="choice-panel" v-else>
-            <div class="code-header"><span><Icon type="ios-list-outline"></Icon> 選擇答案</span></div>
+            <div class="code-header"><span><Icon type="ios-list-outline"></Icon> Choose answer</span></div>
             <div class="choice-content">
               <label v-for="(choice, index) in selected.choices" :key="index" class="choice-option" :class="{selected: choiceIndex === index}">
                 <input v-model="choiceIndex" type="radio" :value="index" :disabled="!quiz.open || expired">
@@ -122,68 +122,68 @@
             </div>
           </div>
 
-          <div class="resize-handle" title="拖曳調整下方面板高度" @mousedown="beginResize"><span></span></div>
+          <div class="resize-handle" title="Drag to resize the lower panel" @mousedown="beginResize"><span></span></div>
           <div class="console-panel">
-            <nav class="pane-tabs console-tabs" aria-label="執行與結果">
-              <button type="button" :class="{active: consoleTab === 'testcase'}" @click="consoleTab = 'testcase'">測試資料</button>
-              <button type="button" :class="{active: consoleTab === 'result'}" @click="consoleTab = 'result'">測試結果</button>
+            <nav class="pane-tabs console-tabs" aria-label="Run and results">
+              <button type="button" :class="{active: consoleTab === 'testcase'}" @click="consoleTab = 'testcase'">Testcase</button>
+              <button type="button" :class="{active: consoleTab === 'result'}" @click="consoleTab = 'result'">Test Result</button>
             </nav>
             <div class="console-scroll" v-if="consoleTab === 'testcase'">
               <template v-if="selected.kind === 'c_lab'">
                 <div class="case-tabs">
                   <button v-for="(sample, index) in sampleCases" :key="index" type="button"
-                          :class="{active: caseIndex === index}" @click="chooseCase(index)">範例 {{ index + 1 }}</button>
-                  <button type="button" :class="{active: caseIndex === -1}" @click="chooseCase(-1)">自訂輸入</button>
+                          :class="{active: caseIndex === index}" @click="chooseCase(index)">Case {{ index + 1 }}</button>
+                  <button type="button" :class="{active: caseIndex === -1}" @click="chooseCase(-1)">Custom input</button>
                 </div>
-                <label class="field-label" for="fcu-stdin">標準輸入 stdin</label>
+                <label class="field-label" for="fcu-stdin">Standard input (stdin)</label>
                 <textarea id="fcu-stdin" v-model="testInput" rows="4" maxlength="8000" spellcheck="false"
-                          placeholder="在這裡輸入測試資料。Run 只會執行這一組輸入，不會計分。"></textarea>
+                          placeholder="Enter test input here. Run executes only this input and does not affect your score."></textarea>
                 <template v-if="activeExpected !== null">
-                  <span class="field-label">範例預期輸出</span>
+                  <span class="field-label">Expected output</span>
                   <pre class="io-box">{{ activeExpected }}</pre>
                 </template>
               </template>
-              <p v-else class="empty-state">選擇答案後按「送出」，即可查看本題得分。</p>
+              <p v-else class="empty-state">Choose an answer and press Submit to see your score.</p>
             </div>
             <div class="console-scroll" v-else>
               <div v-if="runResult" class="result-content">
                 <h2 :class="runResult.status === 'ok' ? 'result-ok' : 'result-error'">{{ runStatusText(runResult.status) }}</h2>
-                <p class="result-meta" v-if="runResult.timeMs !== undefined">執行時間 {{ runResult.timeMs }} ms · 這是自訂測試，不計入成績</p>
-                <span class="field-label">標準輸入</span><pre class="io-box">{{ lastRunInput }}</pre>
-                <span class="field-label">你的輸出</span><pre class="io-box">{{ runResult.stdout || '（沒有輸出）' }}</pre>
-                <template v-if="lastRunExpected !== null"><span class="field-label">範例預期輸出</span><pre class="io-box">{{ lastRunExpected }}</pre></template>
-                <template v-if="runResult.stderr"><span class="field-label">編譯或執行訊息</span><pre class="io-box output-error">{{ runResult.stderr }}</pre></template>
+                <p class="result-meta" v-if="runResult.timeMs !== undefined">Runtime {{ runResult.timeMs }} ms · custom test, not graded</p>
+                <span class="field-label">Standard input</span><pre class="io-box">{{ lastRunInput }}</pre>
+                <span class="field-label">Your output</span><pre class="io-box">{{ runResult.stdout || '(no output)' }}</pre>
+                <template v-if="lastRunExpected !== null"><span class="field-label">Expected output</span><pre class="io-box">{{ lastRunExpected }}</pre></template>
+                <template v-if="runResult.stderr"><span class="field-label">Compiler or runtime messages</span><pre class="io-box output-error">{{ runResult.stderr }}</pre></template>
               </div>
               <div v-else-if="submissionId" class="result-content">
-                <h2 :class="judgeResult && judgeResult.type === 'success' ? 'result-ok' : 'result-title'">{{ judgeResult ? judgeResult.title : '正在評測…' }}</h2>
-                <p v-if="judgeResult" class="result-meta">本題最佳 {{ scoreFor(selected) }} / {{ selected.points }} 分</p>
+                <h2 :class="judgeResult && judgeResult.type === 'success' ? 'result-ok' : 'result-title'">{{ judgeResult ? judgeResult.title : 'Judging…' }}</h2>
+                <p v-if="judgeResult" class="result-meta">Best score {{ scoreFor(selected) }} / {{ selected.points }} pts</p>
                 <p v-if="judgeResult && judgeResult.message" class="output-error">{{ judgeResult.message }}</p>
-                <p v-if="!judgeResult" class="result-meta">已收到程式，正在使用隱藏測資評測。編號：{{ submissionId }}</p>
+                <p v-if="!judgeResult" class="result-meta">Code received. Grading with hidden tests. Submission: {{ submissionId }}</p>
               </div>
-              <div v-else-if="judgeResult" class="result-content"><h2>{{ judgeResult.title }}</h2><p class="result-meta">本題得分 {{ judgeResult.score }} / {{ selected.points }}</p></div>
-              <p v-else class="empty-state">Run 可先用範例或自訂輸入測試；Submit 會使用隱藏測資正式評分。</p>
+              <div v-else-if="judgeResult" class="result-content"><h2>{{ judgeResult.title }}</h2><p class="result-meta">Problem score {{ judgeResult.score }} / {{ selected.points }}</p></div>
+              <p v-else class="empty-state">Run with sample or custom input. Submit grades against hidden tests.</p>
             </div>
             <footer class="console-footer">
-              <button v-if="selected.kind === 'c_lab'" class="syntax-button" type="button" :disabled="checking || !code.trim() || !quiz.open || expired" @click="checkCode(true)">檢查語法</button>
+              <button v-if="selected.kind === 'c_lab'" class="syntax-button" type="button" :disabled="checking || !code.trim() || !quiz.open || expired" @click="checkCode(true)">Check Syntax</button>
               <span class="footer-spacer"></span>
               <button v-if="selected.kind === 'c_lab'" class="run-button" type="button" :disabled="runLoading || submitting || !code.trim() || !quiz.open || expired" @click="runCode">
-                {{ runLoading ? '執行中…' : 'Run' }}
+                {{ runLoading ? 'Running…' : 'Run' }}
               </button>
               <button class="submit-button" type="button"
                       :disabled="submitting || runLoading || !quiz.open || expired || (selected.kind === 'c_lab' ? !code.trim() : choiceIndex === null)"
                       @click="selected.kind === 'c_lab' ? submitCode() : submitChoice()">
-                {{ submitting ? '評測中…' : 'Submit' }}
+                {{ submitting ? 'Judging…' : 'Submit' }}
               </button>
             </footer>
           </div>
         </section>
       </div>
-      <div v-else class="no-question">目前沒有已發布的題目。</div>
+      <div v-else class="no-question">No published problems yet.</div>
     </template>
-    <div v-else class="workspace-loading">{{ loading ? '載入測驗中…' : (error || '找不到測驗。') }}</div>
-    <Modal v-model="showCode" title="自己的提交程式" :width="720">
+    <div v-else class="workspace-loading">{{ loading ? 'Loading quiz…' : (error || 'Quiz not found.') }}</div>
+    <Modal v-model="showCode" title="My submitted code" :width="720">
       <pre class="saved-code">{{ inspectedCode }}</pre>
-      <div slot="footer"><Button @click="showCode = false">關閉</Button></div>
+      <div slot="footer"><Button @click="showCode = false">Close</Button></div>
     </Modal>
   </div>
 </template>
@@ -280,7 +280,7 @@
     watch: {
       code (value) {
         if (!this.selected || this.selected.kind !== 'c_lab' || !this.quiz || !this.quiz.open) return
-        this.saveStatus = '尚未儲存'
+        this.saveStatus = 'Not saved'
         clearTimeout(this.saveTimer)
         const questionId = this.selected.id
         this.saveTimer = setTimeout(() => this.saveDraft(questionId, value), 1100)
@@ -363,21 +363,21 @@
           if (tab === 'status') this.statusEntries = result.entries || []
           else this.leaderboardEntries = result.entries || []
         } catch (error) {
-          this.socialError = error.message || '無法讀取練習資料。'
+          this.socialError = error.message || 'Could not load practice data.'
         } finally {
           this.socialLoading = false
         }
       },
       runStatusText (status) {
         return ({
-          ok: '執行完成',
-          compile_error: '編譯錯誤',
-          runtime_error: '執行錯誤',
-          time_limit: '超過時間限制',
-          memory_limit: '超過記憶體限制',
-          output_limit: '輸出過長',
-          system_error: '執行服務暫時無法使用'
-        })[status] || '執行結果'
+          ok: 'Run completed',
+          compile_error: 'Compilation Error',
+          runtime_error: 'Runtime Error',
+          time_limit: 'Time limit exceeded',
+          memory_limit: 'Memory limit exceeded',
+          output_limit: 'Output limit exceeded',
+          system_error: 'Run service temporarily unavailable'
+        })[status] || 'Run result'
       },
       verdictClass (attempt) {
         const value = attempt.verdict === undefined || attempt.verdict === null ? attempt.result : attempt.verdict
@@ -406,7 +406,7 @@
           }
         } catch (error) {
           if (this.selected && this.selected.id === questionId) {
-            this.runResult = {status: 'system_error', stdout: '', stderr: error.message || '執行失敗。'}
+            this.runResult = {status: 'system_error', stdout: '', stderr: error.message || 'Run failed.'}
           }
         } finally {
           this.runLoading = false
@@ -418,7 +418,7 @@
         try {
           const state = await fcuApi.state(this.classSlug)
           const quiz = (state.quizzes || []).find(item => String(item.id) === String(this.quizId))
-          if (!quiz || !quiz.published) throw new Error('找不到測驗。')
+          if (!quiz || !quiz.published) throw new Error('Quiz not found.')
           this.quiz = quiz
           this.scores = state.scores || {}
           this.drafts = state.drafts || {}
@@ -427,7 +427,7 @@
           if (this.questions.length) this.select(this.questions[0])
           this.loadHistory()
         } catch (error) {
-          this.error = error.message || '無法讀取測驗。'
+          this.error = error.message || 'Could not load quiz.'
         } finally {
           this.loading = false
         }
@@ -469,7 +469,7 @@
             this.chooseCase(details.samples && details.samples.length ? 0 : -1)
           }
         } catch (error) {
-          if (this.selected && this.selected.id === item.id) this.error = error.message || '無法讀取題目說明。'
+          if (this.selected && this.selected.id === item.id) this.error = error.message || 'Could not load problem details.'
         }
       },
       plainText (value) {
@@ -485,14 +485,14 @@
         const code = this.code
         const serial = ++this.checkSerial
         this.checking = true
-        if (manual) this.syntaxStatus = '檢查中…'
+        if (manual) this.syntaxStatus = 'Checking…'
         try {
           const result = await fcuApi.check(this.classSlug, this.quizId, questionId, code)
           if (serial !== this.checkSerial || !this.selected || this.selected.id !== questionId || this.code !== code) return
           this.diagnostics = result.diagnostics || []
-          this.syntaxStatus = result.ok ? '語法檢查通過' : `${this.diagnostics.length} 個編譯診斷`
+          this.syntaxStatus = result.ok ? 'Syntax check passed' : `${this.diagnostics.length} compiler diagnostics`
         } catch (error) {
-          if (manual && serial === this.checkSerial) this.syntaxStatus = error.message || '語法檢查失敗'
+          if (manual && serial === this.checkSerial) this.syntaxStatus = error.message || 'Syntax check failed'
         } finally { this.checking = false }
       },
       async saveDraft (questionId, code) {
@@ -500,8 +500,8 @@
         try {
           await fcuApi.saveDraft(this.classSlug, this.quizId, questionId, code)
           this.drafts[questionId] = code
-          if (this.selected && this.selected.id === questionId && this.code === code) this.saveStatus = '已儲存'
-        } catch (error) { if (this.selected && this.selected.id === questionId) this.saveStatus = '儲存失敗' }
+          if (this.selected && this.selected.id === questionId && this.code === code) this.saveStatus = 'Saved'
+        } catch (error) { if (this.selected && this.selected.id === questionId) this.saveStatus = 'Save failed' }
       },
       async submitChoice () {
         if (!this.selected || this.choiceIndex === null || !this.quiz.open || this.expired) return
@@ -509,13 +509,13 @@
         this.error = ''
         try {
           const result = await fcuApi.submitChoice(this.classSlug, this.quizId, this.selected.id, this.choiceIndex)
-          this.$Message[result.correct ? 'success' : 'info'](`本題得分：${result.earned} / ${result.max}`)
-          this.judgeResult = {title: '已送出', score: result.earned, type: result.correct ? 'success' : 'info'}
+          this.$Message[result.correct ? 'success' : 'info'](`Problem score: ${result.earned} / ${result.max}`)
+          this.judgeResult = {title: 'Submitted', score: result.earned, type: result.correct ? 'success' : 'info'}
           this.consoleTab = 'result'
           this.runResult = null
           await this.refreshState()
           await this.loadHistory()
-        } catch (error) { this.error = error.message || '送出失敗。' }
+        } catch (error) { this.error = error.message || 'Submission failed.' }
         this.submitting = false
       },
       async submitCode () {
@@ -534,13 +534,13 @@
           const result = await fcuApi.submitCode(this.quiz, question, code)
           if (!this.selected || this.selected.id !== question.id) return
           this.submissionId = result.submission_id
-          if (!this.submissionId) throw new Error('程式已送出，但未收到評測編號。請查看提交紀錄。')
+          if (!this.submissionId) throw new Error('Code was submitted, but no submission ID was returned. Check My Submissions.')
           this.consoleTab = 'result'
           this.runResult = null
           this.pollSubmission(this.submissionId, 0, this.selected.id)
         } catch (error) {
           if (this.selected && this.selected.id === question.id) {
-            this.error = error.message || '程式送出失敗。'
+            this.error = error.message || 'Code submission failed.'
             this.submitting = false
           }
         }
@@ -548,7 +548,7 @@
       async pollSubmission (id, count, questionId) {
         if (!this.selected || this.selected.id !== questionId) return
         if (count >= 40) {
-          this.error = '評測仍在進行，請稍後重新整理提交紀錄。'
+          this.error = 'Judging is still in progress. Refresh My Submissions shortly.'
           this.submitting = false
           return
         }
@@ -559,7 +559,7 @@
             this.pollTimer = setTimeout(() => this.pollSubmission(id, count + 1, questionId), 1500)
             return
           }
-          const status = JUDGE_STATUS[result.result] || {name: '評測完成', type: 'info'}
+          const status = JUDGE_STATUS[result.result] || {name: 'Judging complete', type: 'info'}
           const message = Number(result.result) === -2 && result.statistic_info ? result.statistic_info.err_info : ''
           this.judgeResult = {title: status.name, type: status.type, message: String(message || '')}
           this.diagnostics = parseDiagnostics(message)
@@ -568,7 +568,7 @@
           this.submitting = false
         } catch (error) {
           if (!this.selected || this.selected.id !== questionId) return
-          this.error = error.message || '無法取得評測結果；請查看提交紀錄。'
+          this.error = error.message || 'Could not fetch the result. Check My Submissions.'
           this.submitting = false
         }
       },

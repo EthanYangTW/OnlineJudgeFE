@@ -3,30 +3,27 @@
     <div class="home-topline">
       <span>FCU C Studio</span>
       <button type="button" class="theme-button" @click="toggleTheme"
-              :aria-label="theme === 'dark' ? '切換淺色模式' : '切換深色模式'">
-        {{ theme === 'dark' ? '淺色模式' : '深色模式' }}
+              :aria-label="theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'">
+        {{ theme === 'dark' ? 'Light mode' : 'Dark mode' }}
       </button>
     </div>
 
-    <div v-if="!initialized" class="loading-state">載入課堂…</div>
+    <div v-if="!initialized" class="loading-state">Loading classroom…</div>
 
-    <section v-else-if="needsLogin" class="login-card" aria-label="課堂登入">
+    <section v-else-if="needsLogin" class="login-card" aria-label="Classroom login">
       <p class="eyebrow">CLASSROOM ACCESS</p>
-      <h1>登入 C 程式課堂</h1>
-      <p class="login-intro">使用教師提供的課堂代碼與學號登入。此網站不開放自行註冊。</p>
+      <h1>Sign in to C Classroom</h1>
+      <p class="login-intro">Sign in with your student ID and password. Your class opens automatically.</p>
       <div v-if="error" class="login-error" role="alert">{{ error }}</div>
       <form @submit.prevent="login">
-        <label for="fcu-class-slug">課堂代碼</label>
-        <input id="fcu-class-slug" v-model.trim="credentials.classSlug" autocomplete="off"
-               placeholder="例如：fcu-c" spellcheck="false"/>
-        <label for="fcu-student-id">學號</label>
+        <label for="fcu-student-id">Student ID</label>
         <input id="fcu-student-id" v-model.trim="credentials.login" autocomplete="username"
                spellcheck="false"/>
-        <label for="fcu-password">密碼</label>
+        <label for="fcu-password">Password</label>
         <input id="fcu-password" v-model="credentials.password" type="password"
                autocomplete="current-password"/>
         <button type="submit" class="login-submit" :disabled="working">
-          {{ working ? '登入中…' : '登入課堂' }}
+          {{ working ? 'Signing in…' : 'Sign in' }}
         </button>
       </form>
     </section>
@@ -35,36 +32,36 @@
       <div class="board-heading">
         <div>
           <p class="eyebrow">MY CLASSROOM</p>
-          <h1>{{ classroom ? classroom.name : 'C 程式課堂' }}</h1>
-          <p>選擇練習或測驗。每題可獨立作答，進度與程式碼會儲存。</p>
+          <h1>{{ classroom ? classroom.name : 'C Classroom' }}</h1>
+          <p>Choose a practice set or exam. You can open any problem; your code and progress are saved.</p>
         </div>
         <div v-if="actor" class="board-identity">{{ actor.username }}</div>
       </div>
       <div v-if="classes.length > 1" class="class-picker">
-        <span>課堂</span>
+        <span>Classroom</span>
         <Select v-model="classSlug" style="width: 240px" @on-change="selectClass">
           <Option v-for="item in classes" :key="item.slug" :value="item.slug">{{ item.name }}</Option>
         </Select>
       </div>
       <div v-if="error" class="login-error" role="alert">{{ error }}</div>
-      <div class="board-tabs" role="tablist" aria-label="課堂檢視">
+      <div class="board-tabs" role="tablist" aria-label="Classroom views">
         <button type="button" role="tab" :aria-selected="activeView === 'quizzes'"
-                :class="{active: activeView === 'quizzes'}" @click="setView('quizzes')">練習與測驗</button>
+                :class="{active: activeView === 'quizzes'}" @click="setView('quizzes')">Practice & Exams</button>
         <button type="button" role="tab" :aria-selected="activeView === 'status'"
-                :class="{active: activeView === 'status'}" @click="setView('status')">練習動態</button>
+                :class="{active: activeView === 'status'}" @click="setView('status')">Practice Activity</button>
         <button type="button" role="tab" :aria-selected="activeView === 'leaderboard'"
-                :class="{active: activeView === 'leaderboard'}" @click="setView('leaderboard')">練習排行榜</button>
+                :class="{active: activeView === 'leaderboard'}" @click="setView('leaderboard')">Practice Leaderboard</button>
       </div>
       <div v-if="activeView === 'quizzes'" class="quiz-list-wrap">
         <Table :columns="columns" :data="visibleQuizzes" :loading="working" disabled-hover></Table>
-        <div v-if="!working && !visibleQuizzes.length" class="empty">目前沒有開放的練習或測驗。</div>
+        <div v-if="!working && !visibleQuizzes.length" class="empty">No practice sets or exams are available yet.</div>
       </div>
       <div v-else class="social-wrap">
         <div v-if="socialError" class="login-error" role="alert">{{ socialError }}</div>
-        <div v-if="socialLoading" class="empty">載入中…</div>
+        <div v-if="socialLoading" class="empty">Loading…</div>
         <table v-else-if="socialEntries.length" class="social-table">
-          <thead v-if="activeView === 'leaderboard'"><tr><th>名次</th><th>學生</th><th>分數</th><th>完成題數</th><th>提交次數</th></tr></thead>
-          <thead v-else><tr><th>學生</th><th>練習</th><th>題目</th><th>結果</th><th>得分</th><th>時間</th></tr></thead>
+          <thead v-if="activeView === 'leaderboard'"><tr><th>Rank</th><th>Student</th><th>Score</th><th>Solved</th><th>Submissions</th></tr></thead>
+          <thead v-else><tr><th>Student</th><th>Practice</th><th>Problem</th><th>Result</th><th>Score</th><th>Time</th></tr></thead>
           <tbody v-if="activeView === 'leaderboard'">
             <tr v-for="entry in socialEntries" :key="entry.login">
               <td>{{ entry.rank }}</td><td><strong>{{ entry.name }}</strong><small>{{ entry.login }}</small></td>
@@ -80,13 +77,13 @@
             </tr>
           </tbody>
         </table>
-        <div v-else-if="!socialError" class="empty">目前沒有公開的練習紀錄。</div>
+        <div v-else-if="!socialError" class="empty">No public practice results yet.</div>
         <div v-if="socialTotal > 20" class="social-pager">
-          <button type="button" :disabled="socialPage <= 1 || socialLoading" @click="changeSocialPage(-1)">上一頁</button>
+          <button type="button" :disabled="socialPage <= 1 || socialLoading" @click="changeSocialPage(-1)">Previous</button>
           <span>{{ socialPage }} / {{ Math.ceil(socialTotal / 20) }}</span>
-          <button type="button" :disabled="socialPage * 20 >= socialTotal || socialLoading" @click="changeSocialPage(1)">下一頁</button>
+          <button type="button" :disabled="socialPage * 20 >= socialTotal || socialLoading" @click="changeSocialPage(1)">Next</button>
         </div>
-        <p class="social-note">僅顯示已公開的練習成績與狀態；測驗答案及其他學生的程式碼不公開。</p>
+        <p class="social-note">Only published practice scores and status are shown. Exam answers and other students’ code remain private.</p>
       </div>
     </section>
   </div>
@@ -122,27 +119,27 @@
         socialEntries: [],
         socialLoading: false,
         socialError: '',
-        credentials: {classSlug: this.$route.params.classSlug || '', login: '', password: ''},
+        credentials: {login: '', password: ''},
         columns: [
-          {title: '名稱',
+          {title: 'Name',
             key: 'title',
             render: (h, params) => h('Button', {
               props: {type: 'text'},
               on: {click: () => this.openQuiz(params.row)},
               style: {fontSize: '15px', paddingLeft: '0', textAlign: 'left'}
             }, params.row.title)},
-          {title: '模式',
+          {title: 'Mode',
             width: 110,
             render: (h, params) => h('Tag', {
               props: {color: params.row.mode === 'exam' ? 'orange' : 'blue'}
-            }, params.row.mode === 'exam' ? '限時測驗' : '練習')},
-          {title: '題數', width: 90, render: (h, params) => h('span', String((params.row.questions || []).length))},
-          {title: '我的分數', width: 125, render: (h, params) => h('span', this.scoreText(params.row))},
-          {title: '狀態',
+            }, params.row.mode === 'exam' ? 'Exam' : 'Practice')},
+          {title: 'Problems', width: 90, render: (h, params) => h('span', String((params.row.questions || []).length))},
+          {title: 'My Score', width: 125, render: (h, params) => h('span', this.scoreText(params.row))},
+          {title: 'Status',
             width: 120,
             render: (h, params) => h('Tag', {
               props: {color: params.row.open ? 'green' : 'default'}
-            }, params.row.open ? '進行中' : '未開放')}
+            }, params.row.open ? 'Open' : 'Closed')}
         ]
       }
     },
@@ -197,16 +194,16 @@
       },
       async login () {
         const form = this.credentials
-        if (!form.classSlug || !form.login || !form.password) {
-          this.error = '請輸入課堂代碼、學號與密碼。'
+        if (!form.login || !form.password) {
+          this.error = 'Enter your student ID and password.'
           return
         }
         this.working = true
         this.error = ''
         try {
-          await fcuApi.login(form.classSlug, form.login, form.password)
+          const session = await fcuApi.login(form.login, form.password)
           form.password = ''
-          this.classSlug = form.classSlug
+          this.classSlug = session.class
           this.getProfile()
           await this.load()
           this.$router.replace({
@@ -216,7 +213,7 @@
           })
         } catch (error) {
           form.password = ''
-          this.error = error.message || '登入失敗。'
+          this.error = error.message || 'Sign-in failed.'
         } finally {
           this.working = false
         }
@@ -233,7 +230,7 @@
           this.scores = state.scores || {}
           if (this.activeView !== 'quizzes') await this.loadSocial()
         } catch (error) {
-          this.error = error.message || '無法讀取課堂。'
+          this.error = error.message || 'Could not load the classroom.'
           this.quizzes = []
         } finally {
           this.working = false
@@ -276,26 +273,26 @@
           this.socialTotal = result.total || 0
         } catch (error) {
           this.socialEntries = []
-          this.socialError = error.message || '無法讀取練習紀錄。'
+          this.socialError = error.message || 'Could not load practice results.'
         } finally {
           this.socialLoading = false
         }
       },
       verdictText (verdict) {
         const labels = {
-          '0': '通過',
-          '8': '部分通過',
-          '-1': '答案錯誤',
-          '-2': '編譯錯誤',
-          '1': '逾時',
-          '2': '逾時',
-          '3': '記憶體限制',
-          '4': '執行錯誤',
-          '5': '系統錯誤',
-          '6': '排隊中',
-          '7': '評測中',
-          'Accepted': '通過',
-          'Wrong Answer': '答案錯誤'
+          '0': 'Accepted',
+          '8': 'Partially Accepted',
+          '-1': 'Wrong Answer',
+          '-2': 'Compilation Error',
+          '1': 'Time Limit Exceeded',
+          '2': 'Time Limit Exceeded',
+          '3': 'Memory Limit Exceeded',
+          '4': 'Runtime Error',
+          '5': 'System Error',
+          '6': 'Queued',
+          '7': 'Judging',
+          'Accepted': 'Accepted',
+          'Wrong Answer': 'Wrong Answer'
         }
         return labels[String(verdict)] || String(verdict)
       },

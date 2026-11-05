@@ -20,9 +20,9 @@ function request (method, path, data, params) {
 }
 
 export default {
-  login (classSlug, login, password) {
+  login (login, password) {
     // QDU's profile GET sets the CSRF cookie needed for this POST.
-    return api.getUserInfo().then(() => request('post', 'login/', {class: classSlug, login, password}))
+    return api.getUserInfo().then(() => request('post', 'login/', {login, password}))
   },
   classes () { return request('get', 'classes/') },
   state (classSlug) { return request('get', `classes/${encodeURIComponent(classSlug)}/state/`) },
