@@ -296,6 +296,52 @@ export default {
     return ajax('export_problem', 'post', {
       data
     })
+  },
+  getClassrooms () {
+    return ajax('fcu/classroom/classes', 'get')
+  },
+  createClassroom (data) {
+    return ajax('fcu/classroom/classes', 'post', {data})
+  },
+  getClassroomState (slug) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/state`, 'get')
+  },
+  getClassroomRoster (slug) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/roster`, 'get')
+  },
+  importClassroomRoster (slug, csv) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/roster`, 'post', {data: {csv}})
+  },
+  getClassroomAssistants (slug) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/assistants`, 'get')
+  },
+  addClassroomAssistant (slug, data) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/assistants`, 'post', {data})
+  },
+  removeClassroomAssistant (slug, login) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/assistants/${encodeURIComponent(login)}`, 'delete')
+  },
+  setClassroomIPLock (slug, data) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/ip-lock`, 'post', {data})
+  },
+  getClassroomScores (slug) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/scores`, 'get')
+  },
+  createClassroomQuiz (slug, data) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/quizzes`, 'post', {data})
+  },
+  updateClassroomQuiz (slug, id, data) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/quizzes/${id}`, 'put', {data})
+  },
+  createClassroomQuestion (slug, quizId, data) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/quizzes/${quizId}/questions`, 'post', {data})
+  },
+  updateClassroomQuestion (slug, quizId, id, data) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/quizzes/${quizId}/questions/${id}`, 'put', {data})
+  },
+  getClassroomSubmissions (slug, quizId, login) {
+    return ajax(`fcu/classroom/classes/${encodeURIComponent(slug)}/quizzes/${quizId}/submissions`, 'get',
+      {params: login ? {login} : {}})
   }
 }
 

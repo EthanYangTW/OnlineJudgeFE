@@ -1,7 +1,7 @@
 <template>
   <div class="container">
     <div>
-      <SideMenu></SideMenu>
+      <SideMenu :classroom-only="assistantMode"></SideMenu>
     </div>
     <div id="header">
       <i class="el-icon-fa-font katex-editor" @click="katexVisible=true" ></i>
@@ -41,7 +41,8 @@
     data () {
       return {
         version: process.env.VERSION,
-        katexVisible: false
+        katexVisible: false,
+        assistantMode: false
       }
     },
     components: {
@@ -51,15 +52,31 @@
     },
     beforeRouteEnter (to, from, next) {
       api.getProfile().then(res => {
-        if (!res.data.data) {
-          // not login
+        const profile = res.data.data
+        if (!profile || !profile.user) {
           next({name: 'login'})
-        } else {
+        } else if (['Admin', 'Super Admin'].includes(profile.user.admin_type)) {
           next(vm => {
-            vm.$store.commit(types.CHANGE_PROFILE, {profile: res.data.data})
+            vm.$store.commit(types.CHANGE_PROFILE, {profile})
           })
+        } else if (profile.user.admin_type === 'Regular User') {
+          api.getClassrooms().then(classes => {
+            const isAssistant = (classes.data.data || []).some(item => item.role === 'assistant')
+            if (!isAssistant) return next({name: 'login'})
+            if (to.name !== 'classroom') return next({name: 'classroom'})
+            next(vm => {
+              vm.assistantMode = true
+              vm.$store.commit(types.CHANGE_PROFILE, {profile})
+            })
+          }).catch(() => next({name: 'login'}))
+        } else {
+          next({name: 'login'})
         }
-      })
+      }).catch(() => next({name: 'login'}))
+    },
+    beforeRouteUpdate (to, from, next) {
+      if (this.assistantMode && to.name !== 'classroom') return next({name: 'classroom'})
+      next()
     },
     methods: {
       handleCommand (command) {

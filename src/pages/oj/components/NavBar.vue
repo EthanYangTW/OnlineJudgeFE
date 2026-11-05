@@ -2,35 +2,23 @@
   <div id="header">
     <Menu theme="light" mode="horizontal" @on-select="handleRoute" :active-name="activeMenu" class="oj-menu">
       <div class="logo"><span>{{website.website_name}}</span></div>
-      <Menu-item name="/">
-        <Icon type="home"></Icon>
-        {{$t('m.Home')}}
-      </Menu-item>
-      <Menu-item name="/problem">
+      <Menu-item v-if="!classroomRoute" name="/problem">
         <Icon type="ios-keypad"></Icon>
         {{$t('m.NavProblems')}}
       </Menu-item>
-      <Menu-item name="/contest">
+      <Menu-item name="/classroom">
+        <Icon type="ios-book"></Icon>
+        C 課堂
+      </Menu-item>
+      <Menu-item v-if="classroomRoute && isAuthenticated" name="classroom-leaderboard">
+        <Icon type="stats-bars"></Icon>
+        排行榜
+      </Menu-item>
+      <Menu-item v-if="!classroomRoute" name="/contest">
         <Icon type="trophy"></Icon>
         {{$t('m.Contests')}}
       </Menu-item>
-      <Menu-item name="/status">
-        <Icon type="ios-pulse-strong"></Icon>
-        {{$t('m.NavStatus')}}
-      </Menu-item>
-      <Submenu name="rank">
-        <template slot="title">
-          <Icon type="podium"></Icon>
-          {{$t('m.Rank')}}
-        </template>
-        <Menu-item name="/acm-rank">
-          {{$t('m.ACM_Rank')}}
-        </Menu-item>
-        <Menu-item name="/oi-rank">
-          {{$t('m.OI_Rank')}}
-        </Menu-item>
-      </Submenu>
-      <Submenu name="about">
+      <Submenu v-if="!classroomRoute" name="about">
         <template slot="title">
           <Icon type="information-circled"></Icon>
           {{$t('m.About')}}
@@ -47,13 +35,7 @@
           <Button type="ghost"
                   ref="loginBtn"
                   shape="circle"
-                  @click="handleBtnClick('login')">{{$t('m.Login')}}
-          </Button>
-          <Button v-if="website.allow_register"
-                  type="ghost"
-                  shape="circle"
-                  @click="handleBtnClick('register')"
-                  style="margin-left: 5px;">{{$t('m.Register')}}
+                  @click="handleRoute('/classroom')">{{ classroomRoute ? '登入' : $t('m.Login') }}
           </Button>
         </div>
       </template>
@@ -64,7 +46,6 @@
           </Button>
           <Dropdown-menu slot="list">
             <Dropdown-item name="/user-home">{{$t('m.MyHome')}}</Dropdown-item>
-            <Dropdown-item name="/status?myself=1">{{$t('m.MySubmissions')}}</Dropdown-item>
             <Dropdown-item name="/setting/profile">{{$t('m.Settings')}}</Dropdown-item>
             <Dropdown-item v-if="isAdminRole" name="/admin">{{$t('m.Management')}}</Dropdown-item>
             <Dropdown-item divided name="/logout">{{$t('m.Logout')}}</Dropdown-item>
@@ -96,7 +77,13 @@
     methods: {
       ...mapActions(['getProfile', 'changeModalStatus']),
       handleRoute (route) {
-        if (route && route.indexOf('admin') < 0) {
+        if (route === 'classroom-leaderboard') {
+          this.$router.push({
+            name: 'fcu-classroom',
+            params: {classSlug: this.$route.params.classSlug},
+            query: {view: 'leaderboard'}
+          })
+        } else if (route && route.indexOf('admin') < 0) {
           this.$router.push(route)
         } else {
           window.open('/admin/')
@@ -111,8 +98,12 @@
     },
     computed: {
       ...mapGetters(['website', 'modalStatus', 'user', 'isAuthenticated', 'isAdminRole']),
+      classroomRoute () {
+        return this.$route.path.indexOf('/classroom') === 0
+      },
       // 跟随路由变化
       activeMenu () {
+        if (this.classroomRoute && this.$route.query.view === 'leaderboard') return 'classroom-leaderboard'
         return '/' + this.$route.path.split('/')[1]
       },
       modalVisible: {

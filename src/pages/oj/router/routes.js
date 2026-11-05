@@ -5,7 +5,6 @@ import {
   Announcements,
   ApplyResetPassword,
   FAQ,
-  Home,
   Logout,
   NotFound,
   OIRank,
@@ -20,12 +19,27 @@ import {
 import * as Contest from '@oj/views/contest'
 import * as Setting from '@oj/views/setting'
 
+const FcuClassroomHome = () => import(/* webpackChunkName: "fcu-classroom" */ '@oj/views/classroom/ClassroomHome.vue')
+const FcuClassroomQuiz = () => import(/* webpackChunkName: "fcu-classroom" */ '@oj/views/classroom/ClassroomQuiz.vue')
+
 export default [
+  {
+    name: 'fcu-quiz',
+    path: '/classroom/:classSlug/quiz/:quizId',
+    meta: {title: 'C Quiz'},
+    component: FcuClassroomQuiz
+  },
+  {
+    name: 'fcu-classroom',
+    path: '/classroom/:classSlug?',
+    meta: {title: 'C Classroom'},
+    component: FcuClassroomHome
+  },
   {
     name: 'home',
     path: '/',
     meta: {title: 'Home'},
-    component: Home
+    redirect: '/classroom'
   },
   {
     name: 'logout',
