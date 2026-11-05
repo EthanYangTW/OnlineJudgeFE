@@ -141,7 +141,10 @@
 
 <style>
   .fcu-c-editor .vue-codemirror-wrap { flex: 1; min-height: 0; overflow: hidden; }
-  .fcu-c-editor .CodeMirror { height: 100%; font-size: 17px; line-height: 1.6; font-family: Menlo, Consolas, "Liberation Mono", monospace; }
+  /* The upstream editor sets height:auto !important for standalone problem pages.
+     This workspace needs a bounded CodeMirror so its own scroll area can move. */
+  .fcu-c-editor .CodeMirror { height: 100% !important; font-size: 17px; line-height: 1.6; font-family: Menlo, Consolas, "Liberation Mono", monospace; }
+  .fcu-c-editor .CodeMirror-scroll { min-height: 0; max-height: none; }
   .fcu-c-editor .cm-s-material-darker.CodeMirror { background: #262626; color: #e5e7eb; }
   .fcu-c-editor .cm-s-material-darker .CodeMirror-gutters { background: #262626; border-color: #363636; }
   .fcu-c-editor .fcu-errors { width: 12px; }

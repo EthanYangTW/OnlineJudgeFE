@@ -251,7 +251,7 @@
         lastRunExpected: null,
         runResult: null,
         runLoading: false,
-        consoleHeight: 360,
+        consoleHeight: 280,
         resizeStartY: 0,
         resizeStartHeight: 360,
         statusEntries: [],
