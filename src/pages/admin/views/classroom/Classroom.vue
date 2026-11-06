@@ -13,7 +13,7 @@
 
     <template v-if="selectedSlug && state">
       <Panel :title="state.classroom.name">
-        <el-tabs v-model="activeTab">
+        <el-tabs v-model="activeTab" @tab-click="onTabClick">
           <el-tab-pane label="Quizzes" name="quizzes">
             <div class="section-actions">
               <el-button type="primary" icon="el-icon-plus" @click="newQuizVisible = true">New quiz</el-button>
@@ -86,6 +86,7 @@
                 <el-option v-for="quiz in state.quizzes" :key="quiz.id" :value="quiz.id" :label="quiz.title" />
               </el-select>
               <el-button @click="exportScores">Export CSV</el-button>
+              <el-button @click="loadClass">Refresh scores</el-button>
               <span>Visible to teachers only. Each question uses the student's best score.</span>
             </div>
             <el-table :data="leaderboard" stripe :default-sort="{prop: 'earned', order: 'descending'}">
@@ -289,6 +290,9 @@ export default {
     this.refresh()
   },
   methods: {
+    onTabClick (tab) {
+      if (tab.name === 'scores') this.loadClass()
+    },
     formatTime (value) {
       return value ? new Date(value).toLocaleString() : 'No deadline'
     },

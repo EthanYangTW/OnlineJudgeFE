@@ -35,7 +35,10 @@
           <h1>{{ classroom ? classroom.name : 'C Classroom' }}</h1>
           <p>Choose a practice set or exam. You can open any problem; your code and progress are saved.</p>
         </div>
-        <div v-if="actor" class="board-identity">{{ actor.username }}</div>
+        <div v-if="actor" class="board-account">
+          <a v-if="actor.teacher" class="teacher-scores-link" href="/admin/classroom">Teacher scores</a>
+          <span class="board-identity">{{ actor.username }}</span>
+        </div>
       </div>
       <div v-if="classes.length > 1" class="class-picker">
         <span>Classroom</span>
@@ -44,6 +47,9 @@
         </Select>
       </div>
       <div v-if="error" class="login-error" role="alert">{{ error }}</div>
+      <p v-if="actor && actor.teacher" class="teacher-score-note">
+        My Score shows this account's results. <a href="/admin/classroom">Open the teacher panel to review every student's scores.</a>
+      </p>
       <div class="board-tabs" role="tablist" aria-label="Classroom views">
         <button type="button" role="tab" :aria-selected="activeView === 'quizzes'"
                 :class="{active: activeView === 'quizzes'}" @click="setView('quizzes')">Practice & Exams</button>
@@ -357,7 +363,10 @@
   .classroom-home .classroom-board { margin: 50px auto 0; max-width: 1120px; }
   .classroom-home .board-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin: 0 0 28px; }
   .classroom-home .board-heading p:last-child { margin: 9px 0 0; color: var(--home-muted); }
+  .classroom-home .board-account { display: flex; align-items: center; gap: 14px; }
   .classroom-home .board-identity { padding: 7px 12px; border: 1px solid var(--home-border); border-radius: 7px; color: var(--home-muted); white-space: nowrap; }
+  .classroom-home .teacher-scores-link, .classroom-home .teacher-score-note a { color: var(--home-accent); font-weight: 650; }
+  .classroom-home .teacher-score-note { margin: 0 0 18px; color: var(--home-muted); }
   .classroom-home .class-picker { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
   .classroom-home .quiz-list-wrap { padding: 8px; background: var(--home-panel); border: 1px solid var(--home-border); border-radius: 9px; overflow-x: auto; }
   .classroom-home .board-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--home-border); margin-bottom: 16px; }
@@ -381,6 +390,7 @@
   @media (max-width: 620px) {
     .classroom-home .login-card { padding: 25px 21px; margin-top: 42px; }
     .classroom-home .board-heading { flex-direction: column; }
+    .classroom-home .board-account { flex-wrap: wrap; }
     .classroom-home .classroom-board { margin-top: 32px; }
   }
 </style>
