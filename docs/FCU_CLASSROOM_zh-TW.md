@@ -56,7 +56,7 @@ IP 綁定是管理措施，不能替代網路隔離。考場仍須阻止學生�
 
 若要快速加入既有 FCU 題庫，可在建班後依[舊 C 題庫匯入流程](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/IMPORT_C_BANK_zh-TW.md)建立 6 份**未發布**練習：20 題 C、15 題選擇題。匯入器需由部署代理在後端容器執行；教師再逐份檢查與發布。對不同班級分別執行一次，各班之後可獨立修改分數與時段。
 
-教授於 2026-11-05 提供的 8 題 C 教學範例，另整理成[未發布草稿與待確認事項](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/PROFESSOR_C_DRAFTS_zh-TW.md)。目前**尚未指定班級、匯入正式站或發布**。參考程式不會進入學生題面；草稿的私人測資檔也不在公開儲存庫。教授須先確認輸入／輸出格式與「必須寫函式」等無法只靠輸出評測的要求，之後才由部署代理對指定班級執行私人匯入。期中考若採用這些題，須另建限時 **Exam** 題組、設定截止時間並驗收。
+教授於 2026-11-05 提供的 8 題 C 教學範例，已於 2026-11-06 匯入 Windows 主機的 `fcu-c-2026` 班級，仍為**未發布**練習。教師先在 **Quizzes** 檢查英文題面、每題配分、輸入輸出格式與[待確認事項](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/PROFESSOR_C_DRAFTS_zh-TW.md)，再於 **Quiz settings** 發布。參考程式不會進入學生題面；62 組私人測資不在公開儲存庫。要求學生「必須寫函式」仍需人工檢查程式碼。期中考若採用這些題，須另建限時 **Exam** 題組、設定截止時間並驗收。
 
 若由代理人以檔案自動建立班級與學生，可依[部署文件的 `provision_fcu_class` 流程](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/README_zh-TW.md#教師建立課堂與測驗)在後端容器匯入私有 CSV；該流程與教師頁的匯入使用相同規則。代理人應先在測試班級確認學號、中文姓名與分數，再開放正式測驗。
 
