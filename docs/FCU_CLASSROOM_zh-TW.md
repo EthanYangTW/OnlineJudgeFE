@@ -9,11 +9,11 @@
 - 教師帳號由伺服器環境變數 `FCU_TEACHER_USER`、`FCU_TEACHER_PASSWORD` 初始化。請勿把教師密碼寫入前端、CSV、Git 或本文件。
 - 目前 Windows 班級 `fcu-c-2026` 的教師登入名稱為 `chen`，班級限定助教登入名稱為 `ta`；密碼由私有管道交付，勿寫入此文件。學生登入名稱與初始密碼皆為學號。
 - 先確認 HTTPS、PostgreSQL、Redis、QDU JudgeServer 與獨立的 C 語法檢查容器都正常。若語法服務暫停，學生仍可送出程式給正式評測；「檢查語法」會顯示暫時無法使用。
-- 在兩台不同的校內學生電腦測試登入，於教師「Students」表格確認其 `Locked IP` 不同，再啟用正式測驗。若兩人顯示同一個代理伺服器位址，先修正反向代理的真實來源 IP 設定。
+- 若教師之後重新啟用 IP 綁定，須先在兩台不同的校內學生電腦測試登入，於教師「Students」表格確認其 `Locked IP` 不同。若兩人顯示同一個代理伺服器位址，先修正反向代理的真實來源 IP 設定。
 
-### 臨時外網驗收
+### 臨時外網入口
 
-Windows 主機有受保護的 Cloudflare Quick Tunnel，僅允許 `yangethan970503@gmail.com` 透過電子郵件一次性驗證碼進入。先在 Windows 私有檔 `C:\Users\chan\FcuQduOJ\private\cloudflared-quick.log` 找目前的 `https://...trycloudflare.com` 網址，再開啟其 `/classroom` 路徑；教師管理頁為同網域的 `/admin/classroom`。完成 Cloudflare 驗證後，仍須再使用本系統帳密登入。若網址失效，在 Windows 工作排程器檢查 `FCU-C-Protected-Quick-Tunnel` 是否仍在執行；Quick Tunnel 重啟後網址可能變更。外網驗收結束，請停止該排程工作。**不要移除單一信箱保護，也不要把此臨時網址當成全班學生入口。**目前學號即初始密碼，且外網代理下的逐人 IP 綁定尚未完成跨裝置驗證。
+Windows 主機目前以 Cloudflare Quick Tunnel 提供**不需電子郵件驗證**的外網登入頁。先在 Windows 私有檔 `C:\Users\chan\FcuQduOJ\private\cloudflared-quick.log` 找目前的 `https://...trycloudflare.com` 網址，再開啟其 `/classroom` 路徑；教師管理頁為同網域的 `/admin/classroom`。學生仍需輸入本系統帳密。若網址失效，在 Windows 工作排程器檢查 `FCU-C-Public-Quick-Tunnel` 是否仍在執行；Quick Tunnel 重啟後網址可能變更，也沒有可用性保證。`fcu-c-2026` 的整班 IP 綁定目前**關閉**，所以不同網路可登入。**目前學號亦是初始密碼，知道學號的人可從公開網址進入該學生帳號；正式使用前應改發每人不同的密碼。**
 
 ## 1. 建立課堂與匯入學生
 
@@ -43,6 +43,8 @@ Windows 主機有受保護的 Cloudflare Quick Tunnel，僅允許 `yangethan9705
 ## 2. IP 綁定
 
 **Students** 的 **One IP per student** 開關控制整班。每位學生首次登入後綁定當時的用戶端 IP；同一帳號從其他 IP 登入會被拒絕。
+
+`fcu-c-2026` 目前依使用者要求將此開關設為 **Off**；先前出現的「Account unavailable on this network address」因此不應再阻止登入。若日後重新開啟，請先重設舊 IP 鎖並從學生的實際網路驗證。
 
 - 個別暫停：該學生列的 **IP rule** 切到 Off。
 - 個別重新綁定：按 **Reset IP**；原連線會被登出，下一次登入綁定新 IP。
