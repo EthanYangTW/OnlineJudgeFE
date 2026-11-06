@@ -7,8 +7,13 @@
 - 學生入口：`http://<校內伺服器位址>/classroom`，若學校已設定 HTTPS，也可用對應的 `https://` 網址。伺服器本機驗收可用 `http://127.0.0.1:5482/classroom`。
 - 教師入口：相同主機的 `/admin/classroom`；本機驗收可用 `http://127.0.0.1:5482/admin/classroom`。
 - 教師帳號由伺服器環境變數 `FCU_TEACHER_USER`、`FCU_TEACHER_PASSWORD` 初始化。請勿把教師密碼寫入前端、CSV、Git 或本文件。
+- 目前 Windows 班級 `fcu-c-2026` 的教師登入名稱為 `chen`，班級限定助教登入名稱為 `ta`；密碼由私有管道交付，勿寫入此文件。學生登入名稱與初始密碼皆為學號。
 - 先確認 HTTPS、PostgreSQL、Redis、QDU JudgeServer 與獨立的 C 語法檢查容器都正常。若語法服務暫停，學生仍可送出程式給正式評測；「檢查語法」會顯示暫時無法使用。
 - 在兩台不同的校內學生電腦測試登入，於教師「Students」表格確認其 `Locked IP` 不同，再啟用正式測驗。若兩人顯示同一個代理伺服器位址，先修正反向代理的真實來源 IP 設定。
+
+### 臨時外網驗收
+
+Windows 主機有受保護的 Cloudflare Quick Tunnel，僅允許 `yangethan970503@gmail.com` 透過電子郵件一次性驗證碼進入。先在 Windows 私有檔 `C:\Users\chan\FcuQduOJ\private\cloudflared-quick.log` 找目前的 `https://...trycloudflare.com` 網址，再開啟其 `/classroom` 路徑；教師管理頁為同網域的 `/admin/classroom`。完成 Cloudflare 驗證後，仍須再使用本系統帳密登入。若網址失效，在 Windows 工作排程器檢查 `FCU-C-Protected-Quick-Tunnel` 是否仍在執行；Quick Tunnel 重啟後網址可能變更。外網驗收結束，請停止該排程工作。**不要移除單一信箱保護，也不要把此臨時網址當成全班學生入口。**目前學號即初始密碼，且外網代理下的逐人 IP 綁定尚未完成跨裝置驗證。
 
 ## 1. 建立課堂與匯入學生
 
@@ -54,7 +59,7 @@ IP 綁定是管理措施，不能替代網路隔離。考場仍須阻止學生�
 4. 先保留 **Publish to students** 未勾選，建好題目並驗收後，再於 **Quiz settings** 發布。需要立即停止時，取消 **Published** 或把截止時間改為已過時間。
 5. 截止後學生仍可看自己的分數、提交紀錄與保存的程式；題目不再接受作答。
 
-若要快速加入既有 FCU 題庫，可在建班後依[舊 C 題庫匯入流程](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/IMPORT_C_BANK_zh-TW.md)建立 6 份**未發布**練習：20 題 C、15 題選擇題。匯入器需由部署代理在後端容器執行；教師再逐份檢查與發布。對不同班級分別執行一次，各班之後可獨立修改分數與時段。
+若要快速加入既有 FCU 題庫，可在建班後依[舊 C 題庫匯入流程](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/IMPORT_C_BANK_zh-TW.md)建立 6 份練習。本機使用的私人篩選版本已移除 **Add Two Numbers**，保留 19 題 C、15 題選擇題；2026-11-06 已在 `fcu-c-2026` 發布。新班級匯入預設仍為未發布，教師須檢查後逐份開放。不同班級可獨立修改分數與時段；不要改用未篩選的原始題庫檔。
 
 教授於 2026-11-05 提供的 8 題 C 教學範例，已於 2026-11-06 在 Windows 主機的 `fcu-c-2026` 班級發布為 **Professor C Practice**。42 位名冊學生可用學號作為登入名稱與初始密碼，直接進入練習。教師可在 **Quizzes** 檢查英文題面、每題配分、輸入輸出格式與[待確認事項](https://github.com/EthanYangTW/OnlineJudge/blob/master/fcu/PROFESSOR_C_DRAFTS_zh-TW.md)，必要時在 **Quiz settings** 取消發布。參考程式不會進入學生題面；62 組私人測資不在公開儲存庫。要求學生「必須寫函式」仍需人工檢查程式碼。期中考若採用這些題，須另建限時 **Exam** 題組、設定截止時間並驗收。
 
