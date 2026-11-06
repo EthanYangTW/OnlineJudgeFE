@@ -69,6 +69,7 @@
             <article v-for="item in selectedAttempts" :key="item.id || item.submissionId || item.at" class="submission-row">
               <div><strong :class="verdictClass(item)">{{ verdictText(item) }}</strong><small>{{ when(item) }}</small></div>
               <span>{{ item.earned || 0 }} / {{ item.max || selected.points }} pts</span>
+              <button v-if="item.submissionId" type="button" @click="showSubmissionResult(item)">Result details</button>
               <button v-if="item.code" type="button" @click="restoreCode(item)">View code</button>
             </article>
           </div>
@@ -156,7 +157,11 @@
               </div>
               <div v-else-if="submissionId" class="result-content">
                 <h2 :class="judgeResult && judgeResult.type === 'success' ? 'result-ok' : 'result-title'">{{ judgeResult ? judgeResult.title : 'Judging…' }}</h2>
-                <p v-if="judgeResult" class="result-meta">Best score {{ scoreFor(selected) }} / {{ selected.points }} pts</p>
+                <p v-if="judgeResult" class="result-meta">
+                  <span v-if="judgeResult.score !== null && judgeResult.score !== undefined">This submission {{ judgeResult.score }} / {{ selected.points }} pts · </span>
+                  Best {{ scoreFor(selected) }} / {{ selected.points }} pts
+                </p>
+                <p v-if="judgeResult && judgeResult.feedback" class="result-feedback">{{ judgeResult.feedback }}</p>
                 <p v-if="judgeResult && judgeResult.message" class="output-error">{{ judgeResult.message }}</p>
                 <p v-if="!judgeResult" class="result-meta">Code received. Grading with hidden tests. Submission: {{ submissionId }}</p>
               </div>
@@ -561,15 +566,50 @@
           }
           const status = JUDGE_STATUS[result.result] || {name: 'Judging complete', type: 'info'}
           const message = Number(result.result) === -2 && result.statistic_info ? result.statistic_info.err_info : ''
-          this.judgeResult = {title: status.name, type: status.type, message: String(message || '')}
           this.diagnostics = parseDiagnostics(message)
           await this.refreshState()
           await this.loadHistory()
+          if (!this.selected || this.selected.id !== questionId) return
+          const attempt = this.attempts.find(item => item.submissionId === id)
+          this.judgeResult = {title: status.name, type: status.type, message: String(message || ''),
+            score: attempt ? attempt.earned : null, feedback: this.gradingFeedback(result)}
           this.submitting = false
         } catch (error) {
           if (!this.selected || this.selected.id !== questionId) return
           this.error = error.message || 'Could not fetch the result. Check My Submissions.'
           this.submitting = false
+        }
+      },
+      gradingFeedback (submission) {
+        const cases = submission.info && Array.isArray(submission.info.data) ? submission.info.data : []
+        if (Number(submission.result) === 0) {
+          return this.quiz.mode === 'practice' && cases.length
+            ? `All ${cases.length} private tests passed.` : 'All private tests passed.'
+        }
+        if (this.quiz.mode !== 'practice') return 'Some private tests did not pass. Test details are not shown during exams.'
+        if (!cases.length) return 'The submission did not pass every private test. Use Run with your own input to check your output.'
+        const passed = cases.filter(item => Number(item.result) === 0).length
+        const failed = cases.length - passed
+        const reasons = [...new Set(cases.filter(item => Number(item.result) !== 0)
+          .map(item => (JUDGE_STATUS[item.result] || {name: 'Not passed'}).name))].join(', ')
+        return `${passed} of ${cases.length} private tests passed; ${failed} did not (${reasons}). ` +
+          'Points follow the teacher\'s test weights. Private inputs and expected outputs are not shown.'
+      },
+      async showSubmissionResult (attempt) {
+        if (!attempt.submissionId) return
+        const questionId = this.selected && this.selected.id
+        try {
+          const result = await fcuApi.submission(attempt.submissionId)
+          if (!this.selected || this.selected.id !== questionId) return
+          const status = JUDGE_STATUS[result.result] || {name: 'Judging complete', type: 'info'}
+          const message = Number(result.result) === -2 && result.statistic_info ? result.statistic_info.err_info : ''
+          this.submissionId = attempt.submissionId
+          this.judgeResult = {title: status.name, type: status.type, score: attempt.earned,
+            feedback: this.gradingFeedback(result), message: String(message || '')}
+          this.runResult = null
+          this.consoleTab = 'result'
+        } catch (error) {
+          this.error = error.message || 'Could not load the submission result.'
         }
       },
       async refreshState () {
@@ -706,6 +746,7 @@
   .output-error { color: #ed7770; white-space: pre-wrap; }
   .result-content h2 { margin: 0 0 8px; font-size: 19px; }
   .result-meta { color: var(--muted); font-size: 12px; }
+  .result-feedback { max-width: 680px; line-height: 1.6; }
   .console-footer { height: 60px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-top: 1px solid var(--line); }
   .console-footer button { border: 0; border-radius: 6px; padding: 8px 16px; font-weight: 650; }
   .syntax-button { background: transparent; color: var(--muted); }
