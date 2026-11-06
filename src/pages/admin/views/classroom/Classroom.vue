@@ -39,6 +39,29 @@
             </el-table>
           </el-tab-pane>
 
+          <el-tab-pane label="Problem list" name="problems">
+            <div class="section-actions">
+              <el-select v-model="problemQuizId" placeholder="All quizzes" clearable>
+                <el-option v-for="quiz in state.quizzes" :key="quiz.id" :value="quiz.id" :label="quiz.title" />
+              </el-select>
+              <span>{{ problemList.length }} problems</span>
+            </div>
+            <el-table :data="problemList" stripe>
+              <el-table-column prop="quizTitle" label="Quiz" min-width="190" />
+              <el-table-column prop="title" label="Problem" min-width="210" />
+              <el-table-column label="Type" width="150">
+                <template slot-scope="scope">{{ scope.row.kind === 'c_lab' ? 'C lab' : 'Multiple choice' }}</template>
+              </el-table-column>
+              <el-table-column prop="points" label="Points" width="90" />
+              <el-table-column label="Published" width="110">
+                <template slot-scope="scope">{{ scope.row.published ? 'Yes' : 'No' }}</template>
+              </el-table-column>
+              <el-table-column label="Edit" width="110">
+                <template slot-scope="scope"><el-button size="mini" @click="editProblemFromList(scope.row)">Edit</el-button></template>
+              </el-table-column>
+            </el-table>
+          </el-tab-pane>
+
           <el-tab-pane label="Students" name="students">
             <div class="section-actions">
               <el-button type="primary" @click="importVisible = true">Import CSV</el-button>
@@ -243,8 +266,9 @@ export default {
       roster: [],
       assistants: [],
       scoreRows: [],
-      activeTab: 'quizzes',
+      activeTab: 'problems',
       selectedQuizId: null,
+      problemQuizId: null,
       scoreQuizId: null,
       createClassVisible: false,
       importVisible: false,
@@ -275,6 +299,12 @@ export default {
     },
     selectedQuiz () {
       return this.state && this.state.quizzes.find(q => q.id === this.selectedQuizId)
+    },
+    problemList () {
+      if (!this.state) return []
+      return this.state.quizzes.filter(quiz => !this.problemQuizId || quiz.id === this.problemQuizId)
+        .reduce((all, quiz) => all.concat(quiz.questions.map(question => ({...question,
+          quizId: quiz.id, quizTitle: quiz.title}))), [])
     },
     leaderboard () {
       if (!this.state) return []
@@ -312,7 +342,10 @@ export default {
           this.scoreRows = scores.data.data
           if (this.canManageAssistants) this.loadAssistants()
           else this.assistants = []
-          if (!this.state.quizzes.some(q => q.id === this.selectedQuizId)) this.selectedQuizId = null
+          if (!this.state.quizzes.some(q => q.id === this.selectedQuizId)) {
+            this.selectedQuizId = this.state.quizzes.length ? this.state.quizzes[0].id : null
+          }
+          if (!this.state.quizzes.some(q => q.id === this.problemQuizId)) this.problemQuizId = null
         }).catch(() => {})
     },
     loadAssistants () {
@@ -391,6 +424,12 @@ export default {
       this.quizEdit = {title: quiz.title,
         published: quiz.published,
         endsAt: quiz.endsAt ? new Date(quiz.endsAt) : null}
+    },
+    editProblemFromList (problem) {
+      const quiz = this.state.quizzes.find(item => item.id === problem.quizId)
+      if (!quiz) return
+      this.selectQuiz(quiz)
+      this.openEditQuestion(problem)
     },
     saveQuiz () {
       const data = {...this.quizEdit, endsAt: this.quizEdit.endsAt ? this.quizEdit.endsAt.toISOString() : null}
