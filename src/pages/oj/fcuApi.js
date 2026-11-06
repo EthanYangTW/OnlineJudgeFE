@@ -29,6 +29,9 @@ export default {
   attempts (classSlug, quizId) {
     return request('get', `classes/${encodeURIComponent(classSlug)}/quizzes/${encodeURIComponent(quizId)}/submissions/`)
   },
+  practiceTests (classSlug, quizId, submissionId) {
+    return request('get', `classes/${encodeURIComponent(classSlug)}/quizzes/${encodeURIComponent(quizId)}/submissions/${encodeURIComponent(submissionId)}/tests/`)
+  },
   draft (classSlug, quizId, questionId) {
     return request('get', `classes/${encodeURIComponent(classSlug)}/quizzes/${encodeURIComponent(quizId)}/questions/${encodeURIComponent(questionId)}/draft/`)
   },

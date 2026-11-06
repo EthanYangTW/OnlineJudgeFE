@@ -164,6 +164,32 @@
                 <p v-if="judgeResult && judgeResult.feedback" class="result-feedback">{{ judgeResult.feedback }}</p>
                 <p v-if="judgeResult && judgeResult.message" class="output-error">{{ judgeResult.message }}</p>
                 <p v-if="!judgeResult" class="result-meta">Code received. Grading with hidden tests. Submission: {{ submissionId }}</p>
+                <div v-if="quiz.mode === 'practice' && judgeCases.length" class="judge-cases">
+                  <div class="judge-cases-heading">
+                    <h3>Judging tests</h3>
+                    <button type="button" :disabled="runningAllCases || !judgeCode || !quiz.open || expired" @click="runAllJudgingCases">
+                      {{ runningAllCases ? 'Running cases…' : 'Run all inputs' }}
+                    </button>
+                  </div>
+                  <article v-for="item in judgeCases" :key="item.number" class="judge-case">
+                    <div class="judge-case-heading">
+                      <strong>Case {{ item.number }} · {{ caseVerdict(item) }}</strong>
+                      <span>{{ item.earnedWeight }} / {{ item.maxWeight }} test weight</span>
+                    </div>
+                    <span class="field-label">Input{{ item.inputTruncated ? ' (first 16 KB)' : '' }}</span>
+                    <pre class="io-box">{{ item.input || '(empty)' }}</pre>
+                    <span class="field-label">Expected output{{ item.expectedTruncated ? ' (first 16 KB)' : '' }}</span>
+                    <pre class="io-box">{{ item.expected || '(empty)' }}</pre>
+                    <button type="button" class="case-run-button" :disabled="item.running || item.inputTruncated || !judgeCode || !quiz.open || expired"
+                            @click="runJudgingCase(item)">{{ item.running ? 'Running…' : 'Run submitted code on this input' }}</button>
+                    <small v-if="item.inputTruncated">This input is too large for the browser runner.</small>
+                    <template v-if="item.runStatus">
+                      <span class="field-label">Your output · {{ runStatusText(item.runStatus) }}</span>
+                      <pre class="io-box">{{ item.actualOutput || '(no output)' }}</pre>
+                      <pre v-if="item.runError" class="io-box output-error">{{ item.runError }}</pre>
+                    </template>
+                  </article>
+                </div>
               </div>
               <div v-else-if="judgeResult" class="result-content"><h2>{{ judgeResult.title }}</h2><p class="result-meta">Problem score {{ judgeResult.score }} / {{ selected.points }}</p></div>
               <p v-else class="empty-state">Run with sample or custom input. Submit grades against hidden tests.</p>
@@ -234,6 +260,9 @@
         error: '',
         diagnostics: [],
         judgeResult: null,
+        judgeCases: [],
+        judgeCode: '',
+        runningAllCases: false,
         problemDetails: null,
         submissionId: null,
         showCode: false,
@@ -398,6 +427,8 @@
         this.consoleTab = 'result'
         this.runResult = null
         this.judgeResult = null
+        this.judgeCases = []
+        this.judgeCode = ''
         this.submissionId = null
         this.lastRunInput = this.testInput
         this.lastRunExpected = this.activeExpected
@@ -456,6 +487,9 @@
         this.syntaxStatus = ''
         this.problemDetails = null
         this.judgeResult = null
+        this.judgeCases = []
+        this.judgeCode = ''
+        this.runningAllCases = false
         this.submissionId = null
         this.runResult = null
         this.submitting = false
@@ -533,6 +567,8 @@
         this.checkSerial++
         this.diagnostics = []
         this.judgeResult = null
+        this.judgeCases = []
+        this.judgeCode = ''
         try {
           await this.saveDraft(question.id, code)
           if (!this.selected || this.selected.id !== question.id) return
@@ -573,6 +609,8 @@
           const attempt = this.attempts.find(item => item.submissionId === id)
           this.judgeResult = {title: status.name, type: status.type, message: String(message || ''),
             score: attempt ? attempt.earned : null, feedback: this.gradingFeedback(result)}
+          this.judgeCode = (attempt && attempt.code) || result.code || ''
+          await this.loadPracticeTests(id)
           this.submitting = false
         } catch (error) {
           if (!this.selected || this.selected.id !== questionId) return
@@ -593,7 +631,7 @@
         const reasons = [...new Set(cases.filter(item => Number(item.result) !== 0)
           .map(item => (JUDGE_STATUS[item.result] || {name: 'Not passed'}).name))].join(', ')
         return `${passed} of ${cases.length} private tests passed; ${failed} did not (${reasons}). ` +
-          'Points follow the teacher\'s test weights. Private inputs and expected outputs are not shown.'
+          'Points follow the teacher\'s test weights. Judging inputs and expected outputs appear below.'
       },
       async showSubmissionResult (attempt) {
         if (!attempt.submissionId) return
@@ -606,10 +644,58 @@
           this.submissionId = attempt.submissionId
           this.judgeResult = {title: status.name, type: status.type, score: attempt.earned,
             feedback: this.gradingFeedback(result), message: String(message || '')}
+          this.judgeCode = attempt.code || result.code || ''
           this.runResult = null
           this.consoleTab = 'result'
+          await this.loadPracticeTests(attempt.submissionId)
         } catch (error) {
           this.error = error.message || 'Could not load the submission result.'
+        }
+      },
+      async loadPracticeTests (submissionId) {
+        this.judgeCases = []
+        if (this.quiz.mode !== 'practice') return
+        try {
+          const result = await fcuApi.practiceTests(this.classSlug, this.quizId, submissionId)
+          if (this.submissionId !== submissionId) return
+          this.judgeCases = (result.cases || []).map(item => ({...item, running: false,
+            runStatus: '', actualOutput: '', runError: ''}))
+        } catch (error) {
+          this.error = error.message || 'Could not load judging tests.'
+        }
+      },
+      caseVerdict (item) {
+        return item.verdict === null ? 'Not run' :
+          ((JUDGE_STATUS[item.verdict] || {name: 'Judged'}).name)
+      },
+      async runJudgingCase (item) {
+        if (!this.judgeCode || item.running || item.inputTruncated || !this.selected) return
+        this.$set(item, 'running', true)
+        try {
+          const result = await fcuApi.run(this.classSlug, this.quizId, this.selected.id,
+            this.judgeCode, item.input)
+          this.$set(item, 'actualOutput', result.stdout || '')
+          this.$set(item, 'runError', result.stderr || '')
+          this.$set(item, 'runStatus', result.status)
+        } catch (error) {
+          this.$set(item, 'actualOutput', '')
+          this.$set(item, 'runError', error.message || 'Run failed.')
+          this.$set(item, 'runStatus', 'system_error')
+        } finally {
+          this.$set(item, 'running', false)
+        }
+      },
+      async runAllJudgingCases () {
+        if (this.runningAllCases) return
+        const submissionId = this.submissionId
+        this.runningAllCases = true
+        try {
+          for (const item of this.judgeCases) {
+            if (this.submissionId !== submissionId) break
+            await this.runJudgingCase(item)
+          }
+        } finally {
+          this.runningAllCases = false
         }
       },
       async refreshState () {
@@ -747,6 +833,15 @@
   .result-content h2 { margin: 0 0 8px; font-size: 19px; }
   .result-meta { color: var(--muted); font-size: 12px; }
   .result-feedback { max-width: 680px; line-height: 1.6; }
+  .judge-cases { margin-top: 20px; }
+  .judge-cases-heading, .judge-case-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .judge-cases-heading h3 { margin: 0; font-size: 16px; }
+  .judge-cases-heading button, .case-run-button { border: 1px solid var(--line); border-radius: 6px; background: var(--soft); color: var(--text); padding: 7px 10px; cursor: pointer; }
+  .judge-cases-heading button:disabled, .case-run-button:disabled { opacity: .55; cursor: default; }
+  .judge-case { padding: 15px 0 18px; border-top: 1px solid var(--line); }
+  .judge-case-heading strong { font-size: 13px; }
+  .judge-case-heading span { color: var(--muted); font-size: 12px; }
+  .case-run-button { margin-top: 10px; }
   .console-footer { height: 60px; flex: none; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-top: 1px solid var(--line); }
   .console-footer button { border: 0; border-radius: 6px; padding: 8px 16px; font-weight: 650; }
   .syntax-button { background: transparent; color: var(--muted); }
